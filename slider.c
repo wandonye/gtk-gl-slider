@@ -58,7 +58,7 @@ transform_translation (void)
   glTranslatef (offset * direction, 0.0f, 0.0f);
 }
 
-/* actialización del área de dibujo */
+/* actualización del área de dibujo */
 void
 update (void)
 {
