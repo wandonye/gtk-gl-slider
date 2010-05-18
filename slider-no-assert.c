@@ -1,4 +1,5 @@
 /* un deslizador de planos OpenGL texturados con Cairo */
+/* una implementación mínima sin aserciones para dispositivos embebidos */
 /* Juan Manuel Mouriz <jmouriz@gmail.com> */
 
 #include <gtk/gtk.h>
@@ -101,7 +102,6 @@ void
 start_rotation (void)
 {
   angle = 0.0f;
-
   g_timeout_add (SPEED, rotate, NULL);
 }
 
@@ -110,7 +110,6 @@ void
 start_translation (void)
 {
   offset = 0.0f;
-
   g_timeout_add (SPEED, translate, NULL);
 }
 
@@ -120,7 +119,6 @@ void
 go_left (GtkWidget *widget, gpointer data)
 {
   direction = LEFT;
-
   start_rotation ();
 }
 
@@ -128,7 +126,6 @@ void
 go_right (GtkWidget *widget, gpointer data)
 {
   direction = RIGHT;
-
   start_rotation ();
 }
 
@@ -136,7 +133,6 @@ void
 go_back (GtkWidget *widget, gpointer data)
 {
   direction = BACK;
-
   start_translation ();
 }
 
@@ -144,7 +140,6 @@ void
 go_forward (GtkWidget *widget, gpointer data)
 {
   direction = FORWARD;
-
   start_translation ();
 }
 
@@ -187,17 +182,12 @@ draw_covers_stack (void)
   int i;
 
   glPushMatrix ();
-
   transform_translation ();
-
   for (x = 1.0f; x > 0.2f; x -= 0.1f)
     draw_cover (x, -45.0f, 0.0f, FALSE);
-
   for (x = -1.0f; x < -0.2f; x += 0.1f)
     draw_cover (x, 45.0f, 0.0f, FALSE);
-
   draw_cover (0.0f, 0.0f, 0.25f, TRUE);
-
   glPopMatrix ();
 }
 
@@ -211,13 +201,7 @@ build_translation_control (void)
 
   box = gtk_hbox_new (TRUE, 0);
 
-  if (!box)
-    g_assert_not_reached ();
-
   label = gtk_label_new ("<b>Desplazamiento</b>");
-
-  if (!label)
-    g_assert_not_reached ();
 
   gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
   gtk_label_set_use_markup (GTK_LABEL (label), TRUE);
@@ -226,9 +210,6 @@ build_translation_control (void)
 
   button = gtk_button_new_with_label ("Izquierda");
 
-  if (!button)
-    g_assert_not_reached ();
-
   g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (go_back), NULL);
 
   gtk_container_add (GTK_CONTAINER (box), button);
@@ -236,18 +217,12 @@ build_translation_control (void)
 
   button = gtk_button_new_with_label ("Centro");
 
-  if (!button)
-    g_assert_not_reached ();
-
   g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (go_center), NULL);
 
   gtk_container_add (GTK_CONTAINER (box), button);
   gtk_widget_show (button);
 
   button = gtk_button_new_with_label ("Derecha");
-
-  if (!button)
-    g_assert_not_reached ();
 
   g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (go_forward), NULL);
 
@@ -267,13 +242,7 @@ build_rotation_control (void)
 
   box = gtk_hbox_new (TRUE, 0);
 
-  if (!box)
-    g_assert_not_reached ();
-
   label = gtk_label_new ("<b>Rotación</b>");
-
-  if (!label)
-    g_assert_not_reached ();
 
   gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
   gtk_label_set_use_markup (GTK_LABEL (label), TRUE);
@@ -282,9 +251,6 @@ build_rotation_control (void)
 
   button = gtk_button_new_with_label ("Izquierda");
 
-  if (!button)
-    g_assert_not_reached ();
-
   g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (go_left), NULL);
 
   gtk_container_add (GTK_CONTAINER (box), button);
@@ -292,18 +258,12 @@ build_rotation_control (void)
 
   button = gtk_button_new_with_label ("Centro");
 
-  if (!button)
-    g_assert_not_reached ();
-
   g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (go_center), NULL);
 
   gtk_container_add (GTK_CONTAINER (box), button);
   gtk_widget_show (button);
 
   button = gtk_button_new_with_label ("Derecha");
-
-  if (!button)
-    g_assert_not_reached ();
 
   g_signal_connect (G_OBJECT (button), "clicked", G_CALLBACK (go_right), NULL);
 
@@ -322,21 +282,12 @@ build_control (void)
 
   box = gtk_vbox_new (FALSE, 0);
 
-  if (!box)
-    g_assert_not_reached ();
-
   control = build_rotation_control ();
-
-  if (!control)
-    g_assert_not_reached ();
 
   gtk_container_add (GTK_CONTAINER (box), control);
   gtk_widget_show (control);
 
   control = build_translation_control ();
-
-  if (!control)
-    g_assert_not_reached ();
 
   gtk_container_add (GTK_CONTAINER (box), control);
   gtk_widget_show (control);
@@ -360,19 +311,16 @@ realize (GtkWidget *widget, gpointer data)
   GLfloat light[4];
   GdkGLContext *gl_context;
   GdkGLDrawable *gl_drawable;
-  gboolean can_begin;
 
   gl_context = gtk_widget_get_gl_context (widget);
   gl_drawable = gtk_widget_get_gl_drawable (widget);
-  can_begin = gdk_gl_drawable_gl_begin (gl_drawable, gl_context);
 
   light[0] = 1.0f;
   light[1] = 1.0f;
   light[2] = 1.0f;
   light[3] = 1.0f;
 
-  if (!can_begin)
-    g_assert_not_reached ();
+  gdk_gl_drawable_gl_begin (gl_drawable, gl_context);
 
   glEnable (GL_TEXTURE_RECTANGLE_ARB);
   glEnable (GL_LIGHTING);
@@ -391,18 +339,13 @@ configure (GtkWidget *widget, GdkEventConfigure *event, gpointer data)
 {
   GdkGLContext *gl_context;
   GdkGLDrawable *gl_drawable;
-  GLsizei width;
-  GLsizei height;
-  gboolean can_begin;
 
   gl_context = gtk_widget_get_gl_context (widget);
   gl_drawable = gtk_widget_get_gl_drawable (widget);
   width = widget->allocation.width;
   height = widget->allocation.height;
-  can_begin = gdk_gl_drawable_gl_begin (gl_drawable, gl_context);
 
-  if (!can_begin)
-    g_assert_not_reached ();
+  gdk_gl_drawable_gl_begin (gl_drawable, gl_context);
 
   glViewport (0, 0, width, height);
   glMatrixMode (GL_PROJECTION);
@@ -423,16 +366,13 @@ expose (GtkWidget *widget, GdkEventExpose *event, gpointer data)
 {
   GdkGLContext *gl_context;
   GdkGLDrawable *gl_drawable;
-  gboolean can_begin;
   gboolean is_double_buffered;
 
   gl_context = gtk_widget_get_gl_context (widget);
   gl_drawable = gtk_widget_get_gl_drawable (widget);
   is_double_buffered = gdk_gl_drawable_is_double_buffered (gl_drawable);
-  can_begin = gdk_gl_drawable_gl_begin (gl_drawable, gl_context);
 
-  if (!can_begin)
-    g_assert_not_reached ();
+  gdk_gl_drawable_gl_begin (gl_drawable, gl_context);
 
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glBindTexture (GL_TEXTURE_RECTANGLE_ARB, texture);
@@ -462,20 +402,13 @@ main (int argc, char *argv[])
   GdkGLConfig *gl_config;
   cairo_surface_t *surface;
   cairo_t *context;
-  gboolean gl_capability;
 
   gtk_init (&argc, &argv);
   gtk_gl_init (&argc, &argv);
 
   gl_config = gdk_gl_config_new_by_mode (GDK_GL_MODE_RGB | GDK_GL_MODE_ALPHA | GDK_GL_MODE_DEPTH | GDK_GL_MODE_DOUBLE);
 
-  if (!gl_config)
-    g_assert_not_reached ();
-
   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-
-  if (!window)
-    g_assert_not_reached ();
 
   gtk_window_set_title (GTK_WINDOW (window), "Desplazamiento de planos animado");
 
@@ -485,16 +418,10 @@ main (int argc, char *argv[])
 
   box = gtk_vbox_new (FALSE, 0);
 
-  if (!box)
-    g_assert_not_reached ();
-
   gtk_container_add (GTK_CONTAINER (window), box);
   gtk_widget_show (box);
 
   label = gtk_label_new ("<span size='18000' weight='heavy'>Desplazamiento de planos animado</span>");
-
-  if (!label)
-    g_assert_not_reached ();
 
   gtk_label_set_use_markup (GTK_LABEL (label), TRUE);
   gtk_container_add (GTK_CONTAINER (box), label);
@@ -502,16 +429,10 @@ main (int argc, char *argv[])
 
   drawing_area = gtk_drawing_area_new ();
 
-  if (!drawing_area)
-    g_assert_not_reached ();
-
   gtk_container_add (GTK_CONTAINER (box), drawing_area);
   gtk_widget_show (drawing_area);
 
   control = build_control ();
-
-  if (!control)
-    g_assert_not_reached ();
 
   gtk_box_pack_start (GTK_BOX (box), control, FALSE, FALSE, 0);
   gtk_widget_show (control);
@@ -519,17 +440,11 @@ main (int argc, char *argv[])
   /* cargar la imagen en un contexto Cairo y obtener los bytes para usar como textura de los planos */
   surface = cairo_image_surface_create_from_png (IMAGE);
 
-  if (!surface)
-    g_assert_not_reached ();
-
   width = cairo_image_surface_get_width (surface);
   height = cairo_image_surface_get_height (surface);
 
   gtk_widget_set_size_request (drawing_area, width, height);
-  gl_capability = gtk_widget_set_gl_capability (drawing_area, gl_config, NULL, TRUE, GDK_GL_RGBA_TYPE);
-
-  if (!gl_capability)
-    g_assert_not_reached ();
+  gtk_widget_set_gl_capability (drawing_area, gl_config, NULL, TRUE, GDK_GL_RGBA_TYPE);
 
   g_signal_connect_after (G_OBJECT (drawing_area), "realize", G_CALLBACK (realize), NULL);
   g_signal_connect (G_OBJECT (drawing_area), "configure-event", G_CALLBACK (configure), NULL);
@@ -542,23 +457,11 @@ main (int argc, char *argv[])
 
   surface_data[0] = g_malloc0 (4 * width * height);
 
-  if (!surface_data[0])
-    g_assert_not_reached ();
-
   context = cairo_create (surface);
-
-  if (!context)
-    g_assert_not_reached ();
 
   surface_data[0] = cairo_image_surface_get_data (surface);
 
-  if (!context)
-    g_assert_not_reached ();
-
   gtk_main ();
-
-  if (surface_data[0])
-    g_free (surface_data[0]);
 
   return 0;
 }
