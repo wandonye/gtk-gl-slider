@@ -36,7 +36,7 @@ perspective (GLdouble fovy, GLdouble aspect, GLdouble near, GLdouble far)
   GLdouble left;
   GLdouble right;
 
-  top = near * tan (M_PI / 180 * fovy / 2);
+  top = near * tan (M_PI / 180.0f * fovy / 2.0f);
   bottom = -top;
   right = aspect * top;
   left = -right;
@@ -201,6 +201,31 @@ draw_covers_stack (void)
   glPopMatrix ();
 }
 
+void
+draw(void)
+{
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glPushMatrix();
+  glTranslatef(0.0f, -0.45f, 0.0f);
+  glPushMatrix();
+  /* dibujar la reflección */
+  glScalef(1.0, -1.0, 1.0);
+  glTranslatef(0.0f, 1.05f, 0.0f);
+  //glEnable(GL_NORMALIZE);
+  //glCullFace(GL_FRONT);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glColor4f(1.0, 1.0, 1.0, 0.40);
+  draw_covers_stack ();
+  glDisable(GL_BLEND);
+  //glDisable(GL_NORMALIZE);
+  //glCullFace(GL_BACK);
+  glPopMatrix();
+  /* dibujar */
+  draw_covers_stack ();
+  glPopMatrix();
+}
+
 /* barra de control de desplazamiento */
 GtkWidget *
 build_translation_control (void)
@@ -357,7 +382,7 @@ delete (GtkWidget *widget, GdkEvent *event, gpointer data)
 void
 realize (GtkWidget *widget, gpointer data)
 {
-  GLfloat light[4];
+  //GLfloat light[4];
   GdkGLContext *gl_context;
   GdkGLDrawable *gl_drawable;
   gboolean can_begin;
@@ -366,18 +391,19 @@ realize (GtkWidget *widget, gpointer data)
   gl_drawable = gtk_widget_get_gl_drawable (widget);
   can_begin = gdk_gl_drawable_gl_begin (gl_drawable, gl_context);
 
-  light[0] = 1.0f;
-  light[1] = 1.0f;
-  light[2] = 1.0f;
-  light[3] = 1.0f;
+  //light[0] = 1.0f;
+  //light[1] = 1.0f;
+  //light[2] = 1.0f;
+  //light[3] = 1.0f;
 
   if (!can_begin)
     g_assert_not_reached ();
 
   glEnable (GL_TEXTURE_RECTANGLE_ARB);
-  glEnable (GL_LIGHTING);
+  //glEnable (GL_LIGHTING);
   glEnable (GL_LIGHT0);
-  glLightfv (GL_LIGHT0, GL_DIFFUSE, light);
+  glEnable (GL_LIGHT1);
+  //glLightfv (GL_LIGHT0, GL_DIFFUSE, light);
 
   glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   glTexParameteri (GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -407,11 +433,16 @@ configure (GtkWidget *widget, GdkEventConfigure *event, gpointer data)
   glViewport (0, 0, width, height);
   glMatrixMode (GL_PROJECTION);
   glLoadIdentity ();
-  perspective (60.0f, (GLfloat) width / (GLfloat) height, 1.0f, 30.0f);
+  perspective (60.0f, (GLfloat) width / (GLfloat) height, 1.0f, 5.0f);
   glMatrixMode (GL_MODELVIEW);
   glLoadIdentity ();
-  glTranslatef (0.0f, 0.0f, -2.0f);
+  glTranslatef (0.0f, 0.25f, -2.0f);
   glGenTextures (1, &texture);
+
+  /*
+  glBindTexture (GL_TEXTURE_RECTANGLE_ARB, texture);
+  glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, surface_data[0]);
+  */
 
   gdk_gl_drawable_gl_end (gl_drawable);
 
@@ -434,12 +465,9 @@ expose (GtkWidget *widget, GdkEventExpose *event, gpointer data)
   if (!can_begin)
     g_assert_not_reached ();
 
-  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glBindTexture (GL_TEXTURE_RECTANGLE_ARB, texture);
   glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, width, height, 0, GL_BGRA, GL_UNSIGNED_BYTE, surface_data[0]);
-  glPushMatrix ();
-  draw_covers_stack ();
-  glPopMatrix ();
+  draw ();
 
   if (is_double_buffered)
     gdk_gl_drawable_swap_buffers (gl_drawable);
@@ -497,7 +525,7 @@ main (int argc, char *argv[])
     g_assert_not_reached ();
 
   gtk_label_set_use_markup (GTK_LABEL (label), TRUE);
-  gtk_container_add (GTK_CONTAINER (box), label);
+  gtk_box_pack_start (GTK_BOX (box), label, FALSE, FALSE, 0);
   gtk_widget_show (label);
 
   drawing_area = gtk_drawing_area_new ();
